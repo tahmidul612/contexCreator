@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,6 +23,7 @@
       }
     </style>
   </head>
+
   <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
     <!-- Theme Toggle Button -->
     <button
@@ -35,64 +37,34 @@
       </svg>
     </button>
 
-    <!-- Form Container -->
-    <div class="flex items-center justify-center h-full px-4">
-      <form class="w-full max-w-sm bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md" id="input-form">
-        <label for="userInput" class="block mb-2 font-semibold">Enter something:</label>
-        <input
-          type="text"
-          id="userInput"
-          class="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-          placeholder="Type here..."
-        />
-        <button
-          type="submit"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition"
-        >
-          Submit
-        </button>
-      </form>
-    </div>
+    <!-- Form Container + Response Box Together -->
+<div class="flex flex-col items-center justify-center h-full px-4 space-y-6">
+  <form class="w-full max-w-sm bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md" id="input-form">
+    <label for="userInput" class="block mb-2 font-semibold">Enter something:</label>
+    <input
+      type="text"
+      id="userInput"
+      class="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+      placeholder="Type here..."
+    />
+    <button
+      type="submit"
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition"
+    >
+      Submit
+    </button>
+  </form>
 
-    <!-- Response Div (Initially Hidden) -->
-<div
-  id="responseBox"
-  class="mt-6 p-4 w-full sm:max-w-sm md:max-w-md lg:max-w-lg bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded-lg shadow-md hidden"
->
-  <p id="responseText" class="font-semibold text-sm sm:text-base lg:text-lg"></p>
+  <!-- Response Div  -->
+  <div
+    id="responseBox"
+    class="w-full max-w-sm bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 p-4 rounded-lg shadow-md hidden"
+  >
+    <p id="responseText" class="font-semibold text-sm sm:text-base lg:text-lg"></p>
+  </div>
 </div>
 
 
-  <script>
-  function swapIcon() {
-    const icon = document.getElementById('theme-icon');
-    const isDark = document.documentElement.classList.contains('dark');
-    icon.innerHTML = isDark
-      ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-           d="M17.293 14.293A8 8 0 019.707 6.707a8.001 8.001 0 107.586 7.586z"/>`
-      : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-           d="M12 4v2m0 12v2m8-8h2M4 12H2m15.36 6.36l1.42 1.42M6.34 6.34l-1.42-1.42m0 13.44l1.42-1.42M17.66 6.34l-1.42-1.42M12 8a4 4 0 100 8 4 4 0 000-8z"/>`;
-  }
-
-  // Handle form submission
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('input-form');
-    const input = document.getElementById('userInput');
-    const responseBox = document.getElementById('responseBox');
-    const responseText = document.getElementById('responseText');
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const value = input.value.trim();
-      if (value) {
-        responseText.textContent = `You entered: ${value}`;
-        responseBox.classList.remove('hidden');
-      } else {
-        responseText.textContent = `Please enter something!`;
-        responseBox.classList.remove('hidden');
-      }
-    });
-  });
-</script>
   </body>
+
 </html>
