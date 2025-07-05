@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { Send,ArrowLeft, Sparkles, Loader2, Copy, Check, Zap, BookOpen, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Topic {
@@ -9,10 +9,84 @@ interface Topic {
   platformColor: string;
 }
 
+interface GeneratedContent {
+  id: string;
+  prompt: string;
+  content: string;
+  timestamp: Date;
+}
+
 const TopicsPage: React.FC = () => {
   const navigate = useNavigate();
+    const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+    const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
+    const [error, setError] = useState<string | null>(null);
+      const [copiedId, setCopiedId] = useState<string | null>(null);
+
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Simulate API call - replace with your actual backend endpoint
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate content');
+      }
+
+      const data = await response.json();
+      
+      const newContent: GeneratedContent = {
+        id: Date.now().toString(),
+        prompt,
+        content: data.content || 'Generated content would appear here. This is a demo response showcasing how your content will be displayed with proper formatting and styling.',
+        timestamp: new Date(),
+      };
+
+      setGeneratedContent(newContent);
+    } catch (error) {
+      // For demo purposes, we'll show a mock response
+      const mockContent: GeneratedContent = {
+        id: Date.now().toString(),
+        prompt,
+        content: `Here's your generated content based on: "${prompt}"\n\nThis is a comprehensive response that demonstrates the content generation capabilities. The actual response from your backend would replace this mock content.\n\nKey features:\n• Contextual understanding\n• Structured output\n• Relevant insights\n• Professional formatting\n\nThe content maintains consistency with your prompt while providing valuable, actionable information.`,
+        timestamp: new Date(),
+      };
+      setGeneratedContent(mockContent);
+      setError(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+   const copyToClipboard = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+    const handleClear = () => {
+    setPrompt('');
+    setGeneratedContent(null);
+    setError(null);
+  };
 
   const mockTopics: Topic[] = [
     {
@@ -108,8 +182,63 @@ const TopicsPage: React.FC = () => {
       >
         Create Content
       </button>
+               {/* Main Content */}
+        <div className="space-y-6">
+          {/* Prompt Input */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="prompt" className="block text-sm font-medium text-gray-300 mb-2">
+                  What content would you like to generate?
+                </label>
+                <div className="relative">
+                  <textarea
+                    id="prompt"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Enter your prompt here... (e.g., 'Write a blog post about sustainable living', 'Create a product description for eco-friendly water bottles', 'Generate social media content for a fitness brand')"
+                    className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200"
+                    rows={4}
+                    disabled={isLoading}
+                  />
+                  <div className="absolute bottom-3 right-3 text-xs text-gray-500">
+                    {prompt.length}/2000
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors duration-200"
+                  disabled={isLoading}
+                >
+                  Clear
+                </button>
+                <button
+                  type="submit"
+                  disabled={!prompt.trim() || isLoading}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 px-6 py-3 rounded-xl font-medium transition-all duration-200 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      <span>Generate Content</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
     </div>
-  );
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
@@ -150,6 +279,59 @@ const TopicsPage: React.FC = () => {
           }
         </div>
 
+{/* Error Display */}
+          {error && (
+            <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-4">
+              <p className="text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Generated Content */}
+          {generatedContent && (
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-100">Generated Content</h3>
+                <button
+                  onClick={() => copyToClipboard(generatedContent.content, generatedContent.id)}
+                  className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
+                >
+                  {copiedId === generatedContent.id ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-400" />
+                      <span className="text-green-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-gray-700/30 rounded-lg p-4">
+                  <p className="text-sm text-gray-400 mb-2">Original Prompt:</p>
+                  <p className="text-gray-300 italic">"{generatedContent.prompt}"</p>
+                </div>
+
+                <div className="bg-gray-900/50 rounded-lg p-4">
+                  <p className="text-sm text-gray-400 mb-3">Generated Content:</p>
+                  <div className="prose prose-invert max-w-none">
+                    <p className="text-gray-100 leading-relaxed whitespace-pre-wrap">
+                      {generatedContent.content}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Generated on {generatedContent.timestamp.toLocaleString()}</span>
+                  <span>{generatedContent.content.length} characters</span>
+                </div>
+              </div>
+            </div>
+          )}
+
         {/* Progress Indicator */}
         <div className="flex justify-center mt-12 space-x-2">
           <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
@@ -159,7 +341,8 @@ const TopicsPage: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+  );        
+
 };
 
 export default TopicsPage;
