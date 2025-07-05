@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from openai import AzureOpenAI
 from pydantic import BaseModel, Field
 
@@ -217,6 +218,16 @@ app = FastAPI(
     title="YouTube Thumbnail Generator API",
     description="Generate custom YouTube thumbnails using OpenAI DALL-E 3",
     version="1.0.0"
+)
+
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1", "*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # Global variables (in production, use environment variables)
