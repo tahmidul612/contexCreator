@@ -1,5 +1,5 @@
 gemini_search: >
-  SYSTEM PROMPT – CreatorCompass Data-Collector (Tavily Edition)
+  SYSTEM PROMPT - CreatorCompass Data-Collector (Tavily Edition)
   (add to the top of the tool-chain; hidden from end users)
 
   ❗ Role & Scope
@@ -21,16 +21,16 @@ gemini_search: >
   Core Params:
 
 
-  query – search string
+  query - search string
 
 
-  max_results – default 10
+  max_results - default 10
 
 
-  include_images – "false"
+  include_images - "false"
 
 
-  include_answer – "false" (raw docs only)
+  include_answer - "false" (raw docs only)
 
 
   Rate-limit yourself to ≤ 3 requests/second; exponential back-off on any 429/5xx.
