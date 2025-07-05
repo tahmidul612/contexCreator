@@ -1,5 +1,9 @@
-# Created by https://www.toptal.com/developers/gitignore/api/linux,macos,python,windows,visualstudiocode,nextjs
-# Edit at https://www.toptal.com/developers/gitignore?templates=linux,macos,python,windows,visualstudiocode,nextjs
+## Other exclusions
+
+.env
+
+# Created by https://www.toptal.com/developers/gitignore/api/linux,macos,python,windows,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=linux,macos,python,windows,visualstudiocode
 
 ### Linux ###
 *~
