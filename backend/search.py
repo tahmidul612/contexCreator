@@ -156,7 +156,7 @@ def generate_content_with_gemini(user_prompt: str, crawled_data: List[Dict[str, 
     )
     return response.text.strip()
 
-@app.post("/generate")
+@app.post("/generate-content")
 def generate_content_endpoint(request: GenerateRequest):
     """
     Complete workflow for generating content (social post, YouTube script, or IG reel script).
