@@ -36,12 +36,15 @@ const TopicsPage: React.FC = () => {
 
     try {
       // Simulate API call - replace with your actual backend endpoint
-      const response = await fetch('/api/generate-content', {
+      const response = await fetch('http://localhost:8000/generate-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          query: prompt,          // renamed from prompt to query
+          format: 'social_post',  // optional: include/expose as needed
+        })
       });
 
       if (!response.ok) {
@@ -49,11 +52,12 @@ const TopicsPage: React.FC = () => {
       }
 
       const data = await response.json();
+      console.log(data)
       
       const newContent: GeneratedContent = {
         id: Date.now().toString(),
         prompt,
-        content: data.content || 'Generated content would appear here. This is a demo response showcasing how your content will be displayed with proper formatting and styling.',
+        content: data.result || 'Generated content would appear here. This is a demo response showcasing how your content will be displayed with proper formatting and styling.',
         timestamp: new Date(),
       };
 
@@ -183,7 +187,37 @@ const TopicsPage: React.FC = () => {
         Create Content
       </button>
                {/* Main Content */}
-        <div className="space-y-6">
+          </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_70%)]"></div>
+      
+      <div className="relative max-w-6xl mx-auto py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-12">
+          <button
+            onClick={() => navigate('/offers')}
+            className="inline-flex items-center gap-2 px-4 py-2 text-gray-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back
+          </button>
+          
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Topic <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Suggestions</span>
+            </h1>
+            <p className="text-gray-400">
+              {isLoading ? 'Generating personalized content ideas...' : 'Choose a topic to create content'}
+            </p>
+          </div>
+          
+          <div className="w-20"></div> {/* Spacer for centering */}
+        </div>
+
+          <div className="space-y-6">
           {/* Prompt Input */}
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -237,35 +271,7 @@ const TopicsPage: React.FC = () => {
             </form>
           </div>
     </div>
-    </div>
-  )
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_70%)]"></div>
-      
-      <div className="relative max-w-6xl mx-auto py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-12">
-          <button
-            onClick={() => navigate('/offers')}
-            className="inline-flex items-center gap-2 px-4 py-2 text-gray-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-          
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Topic <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Suggestions</span>
-            </h1>
-            <p className="text-gray-400">
-              {isLoading ? 'Generating personalized content ideas...' : 'Choose a topic to create content'}
-            </p>
-          </div>
-          
-          <div className="w-20"></div> {/* Spacer for centering */}
-        </div>
 
         {/* Topics Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
