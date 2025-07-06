@@ -9,8 +9,8 @@ import requests
 from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, JSONResponse
 from openai import AzureOpenAI
 from pydantic import BaseModel, Field
 
@@ -220,7 +220,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -310,6 +309,7 @@ async def generate_thumbnail(request: ThumbnailRequest):
     start_time = datetime.now()
 
     try:
+        print("title", request.title)
         # Generate thumbnail using DALL-E 3
         image_url = await generator.generate_thumbnail(
             title=request.title,
@@ -330,15 +330,20 @@ async def generate_thumbnail(request: ThumbnailRequest):
             # position=request.position
         )
 
+        return JSONResponse({
+            "thumbnail_url": image_url,
+            "generated_at": datetime.now().isoformat()
+        })
+
         # Return image as streaming response
-        return StreamingResponse(
-            io.BytesIO(img_bytes.read()),
-            media_type="image/jpeg",
-            headers={
-                "Content-Disposition": f"inline; filename=thumbnail_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg",
-                "X-Generation-Time": str((datetime.now() - start_time).total_seconds())
-            }
-        )
+        # return StreamingResponse(
+        #     io.BytesIO(img_bytes.read()),
+        #     media_type="image/jpeg",
+        #     headers={
+        #         "Content-Disposition": f"inline; filename=thumbnail_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg",
+        #         "X-Generation-Time": str((datetime.now() - start_time).total_seconds())
+        #     }
+        # )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
