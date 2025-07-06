@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Copy, Download, Eye, Heart, MessageCircle, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Copy, Download, Eye, Heart, MessageCircle, TrendingUp, Image } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 interface ContentData {
@@ -7,6 +7,11 @@ interface ContentData {
   linkedinCarousel: string[];
   youtubeEducational: string;
   youtubeSketch: string;
+  youtubeThumbnail: {
+    url: string;
+    title: string;
+    description: string;
+  } | null;
 }
 
 interface PredictedMetrics {
@@ -18,10 +23,12 @@ interface PredictedMetrics {
 const ContentPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState<'linkedin-regular' | 'linkedin-carousel' | 'youtube-educational' | 'youtube-sketch'>('linkedin-regular');
+  const [activeTab, setActiveTab] = useState<'linkedin-regular' | 'linkedin-carousel' | 'youtube-educational' | 'youtube-sketch' | 'youtube-thumbnail'>('linkedin-regular');
   const [isLoading, setIsLoading] = useState(true);
   const [content, setContent] = useState<ContentData | null>(null);
   const [metrics, setMetrics] = useState<PredictedMetrics>({ likes: 0, comments: 0, views: 0 });
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
 
   const mockContent: ContentData = {
     linkedinRegular: `🚀 How to Build Your Personal Brand in 2025
@@ -141,7 +148,9 @@ PERSON: "Your personal brand isn't about being perfect. It's about being perfect
 
 [TEXT OVERLAY: "What's your authentic story?"]
 
-[END CARD: Subscribe for more real talk about building your brand]`
+[END CARD: Subscribe for more real talk about building your brand]`,
+
+    youtubeThumbnail: null
   };
 
   const mockMetrics = {
@@ -150,8 +159,62 @@ PERSON: "Your personal brand isn't about being perfect. It's about being perfect
     views: Math.floor(Math.random() * 10000) + 2000
   };
 
+  // Function to fetch YouTube thumbnail from API
+  const fetchYoutubeThumbnail = async () => {
+    try {
+      setThumbnailLoading(true);
+      setThumbnailError(null);
+
+      // Get title and description from localStorage
+      const storedTitle = localStorage.getItem('contentTitle') || 'Learn Python in 2024';
+      const storedDescription = localStorage.getItem('contentDescription') || 'A comprehensive guide to learning Python programming in 2024';
+
+      const response = await fetch('http://localhost:8000/generate/thumbnail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: storedTitle
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Update content with the fetched thumbnail data
+      setContent(prev => prev ? {
+        ...prev,
+        youtubeThumbnail: {
+          url: data.thumbnail_url || data.url || '',
+          title: storedTitle,
+          description: storedDescription
+        }
+      } : null);
+
+    } catch (error) {
+      console.error('Error fetching YouTube thumbnail:', error);
+      setThumbnailError('Failed to generate thumbnail. Please try again.');
+      
+      // Fallback to mock data
+      setContent(prev => prev ? {
+        ...prev,
+        youtubeThumbnail: {
+          url: "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+          title: localStorage.getItem('contentTitle') || 'Learn Python in 2024',
+          description: localStorage.getItem('contentDescription') || 'A comprehensive guide to learning Python programming in 2024'
+        }
+      } : null);
+    } finally {
+      setThumbnailLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Simulate loading
+    // Simulate loading for other content
     const timer = setTimeout(() => {
       setContent(mockContent);
       setMetrics(mockMetrics);
@@ -161,11 +224,19 @@ PERSON: "Your personal brand isn't about being perfect. It's about being perfect
     return () => clearTimeout(timer);
   }, [id]);
 
+  // Fetch thumbnail when YouTube thumbnail tab is selected
+  useEffect(() => {
+    if (activeTab === 'youtube-thumbnail' && content && !content.youtubeThumbnail && !thumbnailLoading) {
+      fetchYoutubeThumbnail();
+    }
+  }, [activeTab, content, thumbnailLoading]);
+
   const tabs = [
     { id: 'linkedin-regular', label: 'LinkedIn Regular' },
     { id: 'linkedin-carousel', label: 'LinkedIn Carousel' },
     { id: 'youtube-educational', label: 'YouTube Educational' },
-    { id: 'youtube-sketch', label: 'YouTube Sketch' }
+    { id: 'youtube-sketch', label: 'YouTube Sketch' },
+    { id: 'youtube-thumbnail', label: 'YouTube Thumbnail' }
   ];
 
   const copyToClipboard = (text: string) => {
@@ -183,6 +254,18 @@ PERSON: "Your personal brand isn't about being perfect. It's about being perfect
     document.body.removeChild(element);
   };
 
+  const downloadThumbnail = () => {
+    if (content?.youtubeThumbnail?.url) {
+      const link = document.createElement('a');
+      link.href = content.youtubeThumbnail.url;
+      link.download = 'youtube-thumbnail.jpg';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   const getCurrentContent = () => {
     if (!content) return '';
     
@@ -195,6 +278,10 @@ PERSON: "Your personal brand isn't about being perfect. It's about being perfect
         return content.youtubeEducational;
       case 'youtube-sketch':
         return content.youtubeSketch;
+      case 'youtube-thumbnail':
+        return content.youtubeThumbnail 
+          ? `Title: ${content.youtubeThumbnail.title}\n\nDescription: ${content.youtubeThumbnail.description}\n\nImage URL: ${content.youtubeThumbnail.url}`
+          : '';
       default:
         return '';
     }
@@ -257,28 +344,127 @@ PERSON: "Your personal brand isn't about being perfect. It's about being perfect
                 {tabs.find(tab => tab.id === activeTab)?.label}
               </h3>
               <div className="flex gap-2">
-                <button
-                  onClick={() => copyToClipboard(getCurrentContent())}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                  Copy
-                </button>
-                <button
-                  onClick={() => downloadAsText(getCurrentContent(), `${activeTab}-content.txt`)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
+                {activeTab === 'youtube-thumbnail' ? (
+                  <>
+                    {content?.youtubeThumbnail && (
+                      <button
+                        onClick={downloadThumbnail}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download Image
+                      </button>
+                    )}
+                    <button
+                      onClick={fetchYoutubeThumbnail}
+                      disabled={thumbnailLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {thumbnailLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Image className="w-4 h-4" />
+                          Generate New
+                        </>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => copyToClipboard(getCurrentContent())}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    >
+                      <Copy className="w-4 h-4" />
+                      Copy
+                    </button>
+                    <button
+                      onClick={() => downloadAsText(getCurrentContent(), `${activeTab}-content.txt`)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             
-            <div className="bg-gray-900/50 rounded-lg p-4 max-h-96 overflow-y-auto">
-              <pre className="text-gray-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
-                {getCurrentContent()}
-              </pre>
-            </div>
+            {/* YouTube Thumbnail Display */}
+            {activeTab === 'youtube-thumbnail' ? (
+              <div className="space-y-6">
+                {thumbnailLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-white">Generating thumbnail...</p>
+                    </div>
+                  </div>
+                ) : thumbnailError ? (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <p className="text-red-400">{thumbnailError}</p>
+                    <button
+                      onClick={fetchYoutubeThumbnail}
+                      className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : content?.youtubeThumbnail ? (
+                  <>
+                    <div className="relative group">
+                      <img
+                        src={content.youtubeThumbnail.url}
+                        alt={content.youtubeThumbnail.title}
+                        className="w-full max-w-2xl mx-auto rounded-lg shadow-2xl"
+                        onError={(e) => {
+                          console.error('Image failed to load');
+                          setThumbnailError('Failed to load thumbnail image');
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                        <Image className="w-12 h-12 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-900/50 rounded-lg p-4">
+                      <h4 className="text-white font-semibold mb-2">Thumbnail Details</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-gray-400 text-sm">Title:</span>
+                          <p className="text-white">{content.youtubeThumbnail.title}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 text-sm">Description:</span>
+                          <p className="text-gray-300 text-sm">{content.youtubeThumbnail.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-4">No thumbnail generated yet</p>
+                    <button
+                      onClick={fetchYoutubeThumbnail}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Generate Thumbnail
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-gray-900/50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <pre className="text-gray-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                  {getCurrentContent()}
+                </pre>
+              </div>
+            )}
           </div>
         </div>
 
@@ -318,7 +504,10 @@ PERSON: "Your personal brand isn't about being perfect. It's about being perfect
               <span className="text-blue-400 font-medium">Performance Tip</span>
             </div>
             <p className="text-gray-300 text-sm">
-              Post this content during peak engagement hours (9-11 AM or 1-3 PM) for maximum reach.
+              {activeTab === 'youtube-thumbnail' 
+                ? 'Use bright colors and bold text in your thumbnail to increase click-through rates by up to 30%.'
+                : 'Post this content during peak engagement hours (9-11 AM or 1-3 PM) for maximum reach.'
+              }
             </p>
           </div>
         </div>
